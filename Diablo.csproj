@@ -60,7 +60,7 @@
 	<Reference Include="Btd6ModHelper">
       <HintPath>/home/silentstorm/.steam/steam/steamapps/common/BloonsTD6/Mods/Btd6ModHelper.dll</HintPath>
     </Reference>
-    <EmbeddedResource Include="Bundles/diablo.modhelpernoload" Link="diablo.whatthefuck"/>
-	<EmbeddedResource Include="Bundles/diabloclips.modhelpernoload" Link="diabloclips.whatthefuck"/>
+    <EmbeddedResource Include="Bundles/diablo.modhelpernoload" Link="diablo.modhelpernoload"/>
+	<EmbeddedResource Include="Bundles/diabloclips.modhelpernoload" Link="diabloclips.modhelpernoload"/>
   </ItemGroup>
 </Project>

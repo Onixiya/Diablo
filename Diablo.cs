@@ -1,8 +1,5 @@
-﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
-
-namespace Diablo{
+﻿namespace Diablo{
     public class Diablo:DHero{
-		public static AddBehaviorToBloonModel FireDOT=null;
         public override string BaseTower=>"PatFusty";
         public override int Cost=>750;
         public override string DisplayName=>"Diablo";
@@ -27,20 +24,35 @@ namespace Diablo{
 			diablo.portrait=PortraitReference;
 			diablo.display=new(){guidRef="Diablo-Prefab"};
 			diablo.GetBehavior<DisplayModel>().display=diablo.display;
-			diablo.GetAttackModel().name="BaseAttack";
-			diablo.GetAttackModel().weapons[0].rate=1.25f;
-			diablo.GetAttackModel().weapons[0].projectile.GetDamageModel().damage=2;
-			diablo.GetAttackModel().weapons[0].projectile.pierce=5;
-			diablo.GetAttackModel().weapons[0].projectile.radius=15;
-			diablo.GetAttackModel().weapons[0].projectile.AddBehavior(new CreateProjectileOnContactModel("CPOCM",
-				diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().projectile.Duplicate(),
-				diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().emission.Duplicate(),
-				true,false,false));
-			diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.pierce=5;
-			diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.radius=15;
-			diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=2;
-			diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.RemoveBehavior<CreateEffectOnExhaustFractionModel>();
-			diablo.GetAttackModel().weapons[0].projectile.RemoveBehavior<CreateProjectileOnExhaustFractionModel>();
+			AttackModel attack=diablo.GetAttackModel();
+			attack.name="BaseAttack";
+			WeaponModel weapon=diablo.GetAttackModel().weapons[0];
+			weapon.rate=1.25f;
+			ProjectileModel proj=diablo.GetAttackModel().weapons[0].projectile;
+			proj.GetDamageModel().damage=2;
+			proj.pierce=5;
+			proj.radius=15;
+			proj.collisionPasses=new(new[]{0,-1});
+			CreateProjectileOnExhaustFractionModel projExhaust=proj.GetBehavior<CreateProjectileOnExhaustFractionModel>();
+			CreateProjectileOnContactModel projContact=new CreateProjectileOnContactModel("CPOCM",projExhaust.projectile.Duplicate(),projExhaust.emission.Duplicate(),
+				true,false,false);
+			projContact.projectile.pierce=5;
+			projContact.projectile.radius=15;
+			projContact.projectile.GetDamageModel().damage=2;
+			projExhaust=null;
+			projContact.projectile.RemoveBehavior<CreateEffectOnExhaustFractionModel>();
+			projContact.projectile.collisionPasses=new(new[]{0,-1});
+			proj.AddBehavior(projContact);
+			proj.RemoveBehavior<CreateProjectileOnExhaustFractionModel>();
+			proj.name="DiabloBaseProj";
+			proj.id=proj.name;
+			projContact.projectile.name="DiabloBaseAOEProj";
+			projContact.projectile.id=projContact.projectile.name;
+			diablo.RemoveBehavior<CreateSoundOnBloonLeakModel>();
+			diablo.RemoveBehavior<CreateSoundOnBloonEnterTrackModel>();
+			diablo.RemoveBehavior<CreateSoundOnUpgradeModel>();
+			diablo.RemoveBehavior<CreateSoundOnTowerPlaceModel>();
+			diablo.RemoveBehavior<CreateSoundOnSelectedModel>();
         }
         public class L2:ModHeroLevel<Diablo>{
             public override string Description=>"Faster attack speed";
@@ -53,22 +65,25 @@ namespace Diablo{
             public override string Description=>"Increases damage dealt";
             public override int Level=>3;
             public override void ApplyUpgrade(TowerModel diablo){
-				diablo.GetAttackModel().weapons[0].projectile.GetDamageModel().damage=4;
-				diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=4;
+				ProjectileModel meleeProj=diablo.GetAttackModel().weapons[0].projectile;
+				meleeProj.GetDamageModel().damage=4;
+				meleeProj.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=4;
             }
         }
         public class L4:ModHeroLevel<Diablo>{
             public override string Description=>"Starts gathering Terror from attacked bloons, gaining small buffs with each point of Terror";
             public override int Level=>4;
             public override void ApplyUpgrade(TowerModel diablo){
+				//read upgrade override
             }
         }
         public class L5:ModHeroLevel<Diablo>{
             public override string Description=>"Hits more bloons at once";
             public override int Level=>5;
             public override void ApplyUpgrade(TowerModel diablo){
-				diablo.GetAttackModel().weapons[0].projectile.radius=20;
-				diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.pierce=20;
+				ProjectileModel meleeProj=diablo.GetAttackModel().weapons[0].projectile;
+				meleeProj.radius=20;
+				meleeProj.GetBehavior<CreateProjectileOnContactModel>().projectile.pierce=20;
             }
         }
         public class L6:ModHeroLevel<Diablo>{
@@ -83,8 +98,9 @@ namespace Diablo{
             public override string Description=>"Destroys Lead Bloons instantly with fiery claws and increases damage";
             public override int Level=>7;
             public override void ApplyUpgrade(TowerModel diablo){
-				diablo.GetAttackModel().weapons[0].projectile.GetDamageModel().damage*=1.5f;
-				diablo.GetAttackModel().weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage*=1.5f;
+				ProjectileModel meleeProj=diablo.GetAttackModel().weapons[0].projectile;
+				meleeProj.GetDamageModel().damage*=1.5f;
+				meleeProj.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage*=1.5f;
 				//read bloon damage patch for lead thing
             }
         }
@@ -99,21 +115,20 @@ namespace Diablo{
 				fireBall.name="Fireball";
 				fireBall.addedViaUpgrade="Diablo-Diablo Level 8";
 				fireBall.cooldown=10;
-				ActivateAttackModel fireBallAttack=Game.instance.model.GetTowerFromId("BombShooter-040").GetAbility().
+				ActivateAttackModel fireBallActivate=Game.instance.model.GetTowerFromId("BombShooter-040").GetAbility().
 					GetBehavior<ActivateAttackModel>().Duplicate();
-				fireBallAttack.attacks[0]=Game.instance.model.GetTowerFromId("TackShooter-500").GetAttackModels().
+				AttackModel fireBallAttack=Game.instance.model.GetTowerFromId("TackShooter-500").GetAttackModels().
 					First(a=>a.name.Contains("Meteor")).Duplicate();
-				fireBallAttack.attacks[0].name="FireballAttack";
-				fireBallAttack.attacks[0].AddBehavior(diablo.GetAttackModel().GetBehavior<RotateToTargetModel>().Duplicate());
-				FireDOT=fireBallAttack.attacks[0].weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.
-					GetBehavior<AddBehaviorToBloonModel>().Duplicate();
-				FireDOT.collisionPass=0;
-				fireBallAttack.attacks[0].weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.
-					RemoveBehavior<AddBehaviorToBloonModel>();
-				fireBallAttack.attacks[0].weapons[0].rate=3;
-				fireBallAttack.attacks[0].weapons[0].projectile.GetDamageModel().damage=50;
-				fireBallAttack.attacks[0].weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=25;
-				fireBall.AddBehavior(fireBallAttack);
+				fireBallAttack.name="FireballAttack";
+				fireBallAttack.AddBehavior(diablo.GetAttackModel().GetBehavior<RotateToTargetModel>().Duplicate());
+				WeaponModel fireBallWeapon=fireBallAttack.weapons[0];
+				fireBallWeapon.rate=3;
+				ProjectileModel fireBallProj=fireBallActivate.attacks[0].weapons[0].projectile;
+				fireBallProj.name="DiabloFireballProj";
+				fireBallProj.GetDamageModel().damage=50;
+				fireBallProj.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=25;
+				fireBallActivate.attacks[0]=fireBallAttack;
+				fireBall.AddBehavior(fireBallActivate);
 				diablo.AddBehavior(fireBall);
             }
         }
@@ -145,9 +160,10 @@ namespace Diablo{
 				attackFire.range=60;
 				attackFire.GetBehavior<AttackFilterModel>().filters.AddItem(new FilterOutTagModel("FOTM","Moabs",new(0)));
 				AttackModel attackMelee=diablo.GetAttackModel().Duplicate();
-				attackFire.GetBehavior<AttackFilterModel>().filters.AddItem(new FilterWithTagModel("FWTM","Moabs",true));
-				attackMelee.weapons[0].projectile.GetDamageModel().damage=20;
-				attackMelee.weapons[0].projectile.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=20;
+				attackMelee.GetBehavior<AttackFilterModel>().filters.AddItem(new FilterWithTagModel("FWTM","Moabs",true));
+				ProjectileModel meleeProj=attackMelee.weapons[0].projectile;
+				meleeProj.GetDamageModel().damage=20;
+				meleeProj.GetBehavior<CreateProjectileOnContactModel>().projectile.GetDamageModel().damage=20;
 				activateAttack.attacks=new(new[]{attackFire,attackMelee});
 				//not sure if its already true and really cannot be fucked checking
 				activateAttack.turnOffExisting=true;
@@ -184,14 +200,9 @@ namespace Diablo{
             }
         }
         public class L14:ModHeroLevel<Diablo>{
-            public override string Description=>"Attacks and abilities now set fire to bloons for a short time";
+            public override string Description=>"At 70 Terror, Attacks set fire to bloons for a short time";
             public override int Level=>14;
             public override void ApplyUpgrade(TowerModel diablo){
-				ProjectileModel melee=diablo.GetAttackModel().weapons[0].projectile;
-				melee.GetBehavior<CreateProjectileOnContactModel>().projectile.AddBehavior(FireDOT.Duplicate());
-				melee.AddBehavior(FireDOT.Duplicate());
-				diablo.GetAbilities().First(a=>a.name.Contains("Fireball")).GetBehavior<ActivateAttackModel>().attacks[0].
-					weapons[0].projectile.AddBehavior(FireDOT.Duplicate());
             }
         }
         public class L15:ModHeroLevel<Diablo>{
@@ -266,13 +277,16 @@ namespace Diablo{
         }
 		public override bool Ability(string ability,Tower tower){
 			DiabloBehaviour behaviour=tower.Node.graphic.GetComponent<DiabloBehaviour>();
+			string activeName=behaviour.ActiveForm.name;
+			//rather then do a contains like 10 times in the same method, store the result
+			bool isBase=activeName.Contains("Base");
 			switch(ability){
 				case"AbilityModel_Fireball":
 					if(behaviour.TerrorizeActive){
 						return false;
 					}
 					if(behaviour.Terror>behaviour.FireballCost||NoTerrorCost){
-						if(behaviour.ActiveForm.name.Contains("Base")){
+						if(isBase){
 							PlaySound("Diablo-BaseFireball");
 						}else{
 							PlaySound("Diablo-PrimeFireball");
@@ -284,8 +298,8 @@ namespace Diablo{
 						return false;
 					}
 				case"AbilityModel_Terrorize":
-					if(behaviour.ActiveForm.name.Contains("Base")||tower.towerModel.tier==20){
-						if(behaviour.ActiveForm.name.Contains("Base")){
+					if(isBase||tower.towerModel.tier==20){
+						if(isBase){
 							PlaySound("Diablo-BaseTerrorize");
 						}else{
 							PlaySound("Diablo-PrimeTerrorize");
@@ -296,7 +310,7 @@ namespace Diablo{
 						return false;
 					}
 				case"AbilityModel_PrimeEvil":
-					if(behaviour.ActiveForm.name.Contains("Base")){
+					if(isBase){
 						if(behaviour.Terror>99||NoTerrorCost){
 							PlaySound("Diablo-BasePrimeEvil");
 							behaviour.Terror=0;
@@ -312,43 +326,37 @@ namespace Diablo{
 			return true;
 		}
 		public override void Upgrade(string upgradeName,Tower tower){
-			DiabloBehaviour behaviour=tower.Node.graphic.GetComponent<DiabloBehaviour>();
-			switch(int.Parse(upgradeName.Last().ToString())){
+			DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+			int tier=int.Parse(upgradeName.Split(' ').Last());
+			switch(tier){
 				case 4:
 					behaviour.TerrorCap=100;
 					break;
 				case 12:
-					behaviour.FireballCost=5;
+					behaviour.FireballCost=7.5f;
 					break;
 				case 15:
 					behaviour.TerrorCap=125;
 					break;
 			}
-			tower.Node.graphic.GetComponent<DiabloBehaviour>().PlayUpgradeSound();
+			behaviour.PlayUpgradeSound();
+			behaviour.Tier=tier;
 		}
 		public override void Create(Tower tower){
 			PlaySound("Diablo-BaseBirth");
 		}
 		public override void Attack(Weapon weapon){
-			DiabloBehaviour behaviour=weapon.attack.tower.Node.graphic.GetComponent<DiabloBehaviour>();
-			if(behaviour.ActiveForm.name.Contains("Base")){
-				if(weapon.attack.attackModel.name.Contains("Base")&&behaviour.baseWeapon==null){
-					behaviour.baseWeapon=weapon;
+			DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+			bool isBase=behaviour.ActiveForm.name.Contains("Base");
+			if(isBase){
+				if(weapon.attack.attackModel.name.Contains("Base")&&behaviour.BaseWeapon==null){
+					behaviour.BaseWeapon=weapon;
 				}
 				if(behaviour.Terror<behaviour.TerrorCap){
 					if(behaviour.TerrorizeActive){
-						behaviour.Terror+=3;
+						behaviour.Terror+=6;
 					}else{
-						behaviour.Terror+=1;
-					}
-				}
-				if(behaviour.BonusDamageActive){
-					//what the fuck is the difference between newprojectiles and newprojectiles2
-					for(int i=0;i<weapon.newProjectiles.list.Count;i++){
-						weapon.newProjectiles[i].GetProjectileBehavior<Damage>().damageModel.damage*=1.4f;
-					}
-					for(int i=0;i<weapon.newProjectiles2.list.Count;i++){
-						weapon.newProjectiles2[i].GetProjectileBehavior<Damage>().damageModel.damage*=1.4f;
+						behaviour.Terror+=3;
 					}
 				}
 			}
@@ -367,15 +375,44 @@ namespace Diablo{
 			}
 		}
 		public override void Select(Tower tower){
-			tower.Node.graphic.GetComponent<DiabloBehaviour>().PlaySelectSound();
+			DiabloBehaviour.Instance.PlaySelectSound();
 		}
+		[HarmonyPatch(typeof(Projectile),"Initialise")]
+		public class ProjectileInitialise_Patch{
+			[HarmonyPrefix]
+			public static void Prefix(ref Model modelToUse){
+				DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+				ProjectileModel projModel=modelToUse.Cast<ProjectileModel>();
+				if(behaviour!=null){
+					//Log(behaviour.Terror+" "+projModel.id+" "+projModel.HasBehavior<AddBehaviorToBloonModel>()+" "+behaviour.Tier);
+					if(behaviour.Terror>59&&projModel.id.Contains("Diablo")&&!projModel.HasBehavior<AddBehaviorToBloonModel>()&&behaviour.Tier>13){
+						projModel.AddBehavior(AddFire);
+					}
+				}
+			}
+		}
+		/*[HarmonyPatch(typeof(AddBehaviorToBloon),"Initialise")]
+		public class AddBehaviorToBloonModel_Patch{
+			[HarmonyPrefix]
+			public static void Prefix(){ 
+				Log("addbehaviourinit");
+			}
+		}*/
 		[HarmonyPatch(typeof(Bloon),"Damage")]
 		public class BloonDamage_Patch{
 			[HarmonyPrefix]
-			public static void Prefix(ref Bloon __instance,Tower tower){
-				TowerModel towerModel=tower.towerModel;
-				if(__instance.bloonModel.baseId=="Lead"&&towerModel.baseId.Contains("Diablo")&&towerModel.tier>6){
-					__instance.Destroy();
+			public static void Prefix(ref Bloon __instance,Tower tower,ref float totalAmount){
+				if(tower!=null){
+					TowerModel towerModel=tower.towerModel;
+					if(towerModel.baseId.Contains("Diablo")){
+						DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+						if(behaviour.BonusDamageActive&&behaviour.Tier>7){
+							totalAmount*=1.5f;
+						}
+						if(__instance.bloonModel.baseId=="Lead"&&behaviour.Tier>6){
+							__instance.Destroy();
+						}
+					}
 				}
 			}
 		}
@@ -415,6 +452,18 @@ namespace Diablo{
 							break;
 					}
 				}
+			}
+		}
+		public override void RoundStart(){
+			DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+			if(behaviour!=null){
+				PlayAnimation(behaviour.ActiveForm.GetComponent<Animator>(),"StandReady");
+			}
+		}
+		public override void RoundEnd(){
+			DiabloBehaviour behaviour=DiabloBehaviour.Instance;
+			if(behaviour!=null){
+				PlayAnimation(behaviour.ActiveForm.GetComponent<Animator>(),"StandReadyEnd");
 			}
 		}
     }

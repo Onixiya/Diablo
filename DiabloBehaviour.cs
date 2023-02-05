@@ -1,11 +1,9 @@
-using Il2CppAssets.Scripts.Simulation.Towers.Behaviors.Attack;
-
 namespace Diablo{
 	[RegisterTypeInIl2Cpp]
     public class DiabloBehaviour:MonoBehaviour{
         public DiabloBehaviour(IntPtr ptr):base(ptr){}
-		private int terror=0;
-		public int Terror{
+		private float terror=0;
+		public float Terror{
 			get{
 				return terror;
 			}
@@ -15,16 +13,19 @@ namespace Diablo{
 				}
 				try{
 					if(Math.Sign(value)==1){
-						baseWeapon.attack.range+=0.075f;
-						baseWeapon.CalcRateFrames()
+						BaseWeapon.attack.range+=0.075f;
+						BaseWeapon.weaponModel.rate-=0.0075f;
+						BaseWeapon.CalcRateFrames();
 					}else{
-						baseWeapon.attack.range-=0.075f;
+						BaseWeapon.attack.range-=0.075f;
+						BaseWeapon.weaponModel.rate+=0.0075f;
+						BaseWeapon.CalcRateFrames();
 					}
 				}catch{}
 				terror=value;
 			}
 		}
-		public int FireballCost=10;
+		public float FireballCost=10;
 		public int PrimeEvilCost=100;
 		public int TerrorCap=0;
 		public int UpgradeSound=0;
@@ -40,8 +41,11 @@ namespace Diablo{
 		public List<Material>Materials=new();
 		public bool TerrorizeActive=false;
 		public bool FastAttack=false;
-		public Weapon baseWeapon=null;
+		public Weapon BaseWeapon=null;
+		public static DiabloBehaviour Instance;
+		public int Tier=0;
 		void Start(){
+			Instance=this;
 			Base=transform.GetChild(0).gameObject;
 			Prime=transform.GetChild(1).gameObject;
 			Fire=transform.GetChild(2).GetComponent<ParticleSystem>();
@@ -105,7 +109,7 @@ namespace Diablo{
 					BonusDamageActive=false;
 				}
 			}
-			if(Terror>69){
+			if(Terror>59){
 				if(!RuneOverhead.isPlaying){
 					RuneOverhead.Play();
 				}
@@ -133,7 +137,7 @@ namespace Diablo{
                 while(visibility>0){
                     foreach(Material material in Materials){
                         visibility=material.GetFloat("_Visibility");
-                        material.SetFloat("_Visibility",visibility-0.01f);
+                        material.SetFloat("_Visibility",visibility-0.0125f);
                     }
                     yield return new WaitForSeconds(9999);
                 }
@@ -148,7 +152,7 @@ namespace Diablo{
                 while(visibility<1){
                     foreach(Material material in Materials){
                         visibility=material.GetFloat("_Visibility");
-                        material.SetFloat("_Visibility",visibility+0.01f);
+                        material.SetFloat("_Visibility",visibility+0.0125f);
                     }
                     yield return new WaitForSeconds(9999);
                 }

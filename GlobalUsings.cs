@@ -25,7 +25,6 @@ global using static Diablo.ModMain;
 global using Il2CppInterop.Runtime.Attributes;
 global using Il2CppAssets.Scripts.Models.GenericBehaviors;
 global using Il2CppAssets.Scripts.Models.Towers.Projectiles.Behaviors;
-global using Il2CppAssets.Scripts.Simulation.Towers.Projectiles.Behaviors;
 global using Il2CppAssets.Scripts.Models.Towers.Filters;
 global using Il2CppAssets.Scripts.Simulation.Bloons;
 global using Il2CppAssets.Scripts.Simulation.Towers.Behaviors.Abilities.Behaviors;
@@ -33,4 +32,9 @@ global using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack;
 global using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack.Behaviors;
 global using Il2CppAssets.Scripts.Models.Towers.Projectiles;
 global using BTD_Mod_Helper.Api.ModOptions;
+global using Il2CppAssets.Scripts.Models.Towers.Weapons;
+global using Il2CppInterop.Runtime.InteropTypes.Arrays;
+global using Il2CppAssets.Scripts.Models.Bloons.Behaviors;
+global using Il2CppAssets.Scripts.Models.Towers.Behaviors;
+global using Il2CppAssets.Scripts.Simulation.Towers.Projectiles;
 namespace Diablo{}

@@ -1,11 +1,12 @@
 ﻿[assembly: MelonGame("Ninja Kiwi","BloonsTD6")]
-[assembly: MelonInfo(typeof(Diablo.ModMain),"Diablo","1.0.0","Silentstorm")]
+[assembly: MelonInfo(typeof(Diablo.ModMain),"Diablo","1.1.0","Silentstorm")]
 namespace Diablo{
     public class ModMain:BloonsTD6Mod{
         public static Dictionary<string,DHero>TowerTypes=new();
         public static AbilityModel BlankAbilityModel;
 		public static string BundleDir;
         private static MelonLogger.Instance mllog;
+		public static AddBehaviorToBloonModel AddFire;
         public static ModSettingBool NoTerrorCost=new(false){
 			description="Disables terror requirements"
 		};
@@ -44,7 +45,7 @@ namespace Diablo{
                     if(tower.Name!=""){
                         TowerTypes.Add(tower.Name,tower);
                         tower.LoadedBundle=UnityEngine.AssetBundle.LoadFromFileAsync(BundleDir+tower.Name.ToLower()).assetBundle;
-                        }
+                    }
                 }catch{}
             }
             foreach(string bundle in assembly.GetManifestResourceNames()){
@@ -55,9 +56,10 @@ namespace Diablo{
                     File.WriteAllBytes(BundleDir+bundle.Split('.')[1],bytes);
                 }catch(Exception error){
                     Log("Failed to write "+bundle);
-                    string message=error.Message;
-                    message+="@\n"+error.StackTrace;
-                    Log(message,"error");
+                    Exception baseError=error.GetBaseException();
+					string message=baseError.Message;
+					message+="@\n"+baseError.StackTrace;
+					Log(message,"error");
                 }
             }
 		}
@@ -80,9 +82,10 @@ namespace Diablo{
                     }catch{
                         Log("Bundle is null");
                     }
-                    string message=error.Message;
-                    message+="@\n"+error.StackTrace;
-                    Log(message,"error");
+                    Exception baseError=error.GetBaseException();
+					string message=baseError.Message;
+					message+="@\n"+baseError.StackTrace;
+					Log(message,"error");
                     return null;
                 }
             }
@@ -92,9 +95,10 @@ namespace Diablo{
                 Game.instance.audioFactory.PlaySoundFromUnity(null,name,"FX",1,1);
             }catch(Exception error){
                 Log("Failed to play clip "+name);
-                string message=error.Message;
-                message+="@\n"+error.StackTrace;
-                Log(message,"error");
+                Exception baseError=error.GetBaseException();
+				string message=baseError.Message;
+				message+="@\n"+baseError.StackTrace;
+				Log(message,"error");
             }
         }
         public static void PlayAnimation(Animator animator,string anim,float duration=0.2f){
@@ -104,9 +108,10 @@ namespace Diablo{
                 }
             }catch(Exception error){
                 Log("Failed to play animation "+anim);
-                string message=error.Message;
-                message+="@\n"+error.StackTrace;
-                Log(message,"error");
+                Exception baseError=error.GetBaseException();
+				string message=baseError.Message;
+				message+="@\n"+baseError.StackTrace;
+				Log(message,"error");
             }
         }
         public override void OnGameModelLoaded(GameModel model){
@@ -117,6 +122,12 @@ namespace Diablo{
             BlankAbilityModel.RemoveBehavior<TurboModel>();
             BlankAbilityModel.RemoveBehavior<CreateEffectOnAbilityModel>();
             BlankAbilityModel.RemoveBehavior<CreateSoundOnAbilityModel>();
+			AddFire=model.GetTowerFromId("WizardMonkey-030").GetDescendant<AddBehaviorToBloonModel>().Duplicate();
+			AddFire.GetBehavior<DamageOverTimeModel>().damage=50;
+			AddFire.GetBehavior<DamageOverTimeModel>().interval=0.5f;
+			AddFire.GetBehavior<DamageOverTimeModel>().triggerImmediate=true;
+			AddFire.GetBehavior<DamageOverTimeModel>().displayLifetime=5;
+			AddFire.collisionPass=-1;
         }
         [HarmonyPatch(typeof(Factory.__c__DisplayClass21_0),"_CreateAsync_b__0")]
         public class FactoryCreateAsync_Patch{
@@ -206,9 +217,10 @@ namespace Diablo{
                         return TowerTypes[towerName].Ability(__instance.abilityModel.name,__instance.tower);
                     }catch(Exception error){
                         Log("Failed to run Ability for "+towerName);
-                        string message=error.Message;
-                        message+="@\n"+error.StackTrace;
-                        Log(message,"error");
+                        Exception baseError=error.GetBaseException();
+						string message=baseError.Message;
+						message+="@\n"+baseError.StackTrace;
+						Log(message,"error");
 						return true;
                     }
                 }
@@ -227,9 +239,10 @@ namespace Diablo{
                             }
                         }catch(Exception error){
                             Log("Failed to add audio clips from "+bundlePath);
-                            string message=error.Message;
-                            message+="@\n"+error.StackTrace;
-                            Log(message,"error");
+                            Exception baseError=error.GetBaseException();
+							string message=baseError.Message;
+							message+="@\n"+baseError.StackTrace;
+							Log(message,"error");
                         }
                     }
                 }
